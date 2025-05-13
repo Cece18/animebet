@@ -32,6 +32,65 @@ public class Bet {
     private Nominee nominee;
 
     @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public Integer getAmount() {
+        return amount;
+    }
+    public void setAmount(Integer amount) {
+        this.amount = amount;
+    }
+    public Boolean getIsWinner() {
+        return isWinner;
+    }
+    public void setIsWinner(Boolean isWinner) {
+        this.isWinner = isWinner;
+    }
+    public Double getWinningAmount() {
+        return winningAmount;
+    }
+    public void setWinningAmount(Double winningAmount) {
+        this.winningAmount = winningAmount;
+    }
+    public LocalDateTime getPlacedAt() {
+        return placedAt;
+    }
+    public void setPlacedAt(LocalDateTime placedAt) {
+        this.placedAt = placedAt;
+    }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+    public Nominee getNominee() {
+        return nominee;
+    }
+    public void setNominee(Nominee nominee) {
+        this.nominee = nominee;
+    }
+    public Category getCategory() {
+        return category;
+    }
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+    public User getUser() {
+        return user;
+    }
+    public void setUser(User user) {
+        this.user = user;
+    }
 }

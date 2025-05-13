@@ -34,5 +34,47 @@ public class Nominee {
     @OneToMany(mappedBy = "nominee", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Bet> bets;
 
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    public String getImageUrl() {
+        return imageUrl;
+    }
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+    public Double getMultiplier() {
+        return multiplier;
+    }
+    public void setMultiplier(Double multiplier) {
+        this.multiplier = multiplier;
+    }
+    public Category getCategory() {
+        return category;
+    }
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+    public List<Bet> getBets() {
+        return bets;
+    }
+    public void setBets(List<Bet> bets) {
+        this.bets = bets;
+    }
 
 }

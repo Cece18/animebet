@@ -21,8 +21,28 @@ public class User {
     @Column(nullable = false)
     private String email;
 
+    @Column(nullable = false)
+    private int points = 100; // Default starting points
+
+    @Column(nullable = false)
+    private String role = "USER"; // default at Java level
+
+
+
     public Long getId() {
         return id;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public String getRole() {
+        return role;
     }
 
     public String getUsername() {

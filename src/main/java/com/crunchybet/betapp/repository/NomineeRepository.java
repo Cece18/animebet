@@ -9,8 +9,6 @@ import java.util.List;
 
 @Repository
 public interface NomineeRepository  extends JpaRepository<Nominee, Long> {
-    // Custom query methods can be defined here if needed
-    // For example, find categories by name or other attributes
-    List<Category> findByName(String name);
-    List<Category> findByCategoryId(Long id);
+    List<Nominee> findByName(String name);
+    List<Nominee> findByDescription(String description);
 }
