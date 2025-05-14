@@ -18,28 +18,28 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    private BetRepository betRepository;
-
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Autowired
+    private BetRepository betRepository;
+
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email);
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
         }
         return new org.springframework.security.core.userdetails.User(
-            user.getUsername(),
-            user.getPassword(),
-            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                user.getEmail(),
+                user.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority("USER"))
         );
     }
 
@@ -68,12 +68,6 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("User not found");
         }
 
-        // Verify old password
-//        if (!verifyPassword(oldPassword, user.getPassword())) {
-//            throw new IllegalArgumentException("Current password is incorrect");
-//        }
-
-        // Check if new password is same as old password
         if (verifyPassword(newPassword, user.getPassword())) {
             throw new IllegalArgumentException("New password must be different from current password");
         }

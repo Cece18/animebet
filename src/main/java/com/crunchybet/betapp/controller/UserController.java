@@ -4,6 +4,7 @@ import com.crunchybet.betapp.dto.BetResponseDTO;
 import com.crunchybet.betapp.dto.UserDTO;
 import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.repository.UserRepository;
+import com.crunchybet.betapp.service.JwtService;
 import com.crunchybet.betapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,9 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtService jwtService;
+
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody UserDTO userDTO) {
         User existingUser = userService.findByUsername(userDTO.getUsername());
@@ -48,6 +52,33 @@ public class UserController {
         userService.registerUser(user);
 
         return ResponseEntity.ok("User registered successfully");
+    }
+
+
+    @PostMapping("/auth/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+        String email = credentials.get("email");
+        String password = credentials.get("password");
+
+        try {
+            User user = userService.findByEmail(email);
+            if (user == null || !userService.verifyPassword(password, user.getPassword())) {
+                return ResponseEntity.status(401).body("Invalid credentials");
+            }
+
+            UserDetails userDetails = userService.loadUserByUsername(email);
+            String token = jwtService.generateToken(userDetails);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("username", user.getUsername());
+            response.put("email", user.getEmail());
+            response.put("points", user.getPoints());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Authentication failed");
+        }
     }
 
     @PostMapping("/update-password")
