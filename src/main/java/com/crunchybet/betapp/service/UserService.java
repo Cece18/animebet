@@ -67,6 +67,10 @@ public class UserService implements UserDetailsService {
         if (user == null) {
             throw new IllegalArgumentException("User not found");
         }
+        // Verify old password
+        if (!verifyPassword(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
 
         if (verifyPassword(newPassword, user.getPassword())) {
             throw new IllegalArgumentException("New password must be different from current password");

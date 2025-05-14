@@ -69,6 +69,7 @@ public class CategoryService {
                     nomineeDTO.setName(nominee.getName());
                     nomineeDTO.setImageUrl(nominee.getImageUrl());
                     nomineeDTO.setMultiplier(nominee.getMultiplier());
+                    nomineeDTO.setCategoryId(category.getId());
                     return nomineeDTO;
                 })
                 .collect(Collectors.toList());

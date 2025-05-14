@@ -5,6 +5,7 @@ import com.crunchybet.betapp.model.Bet;
 import com.crunchybet.betapp.model.Category;
 import com.crunchybet.betapp.model.Nominee;
 import com.crunchybet.betapp.model.User;
+import com.crunchybet.betapp.model.enums.BetStatus;
 import com.crunchybet.betapp.repository.BetRepository;
 import com.crunchybet.betapp.repository.CategoryRepository;
 import com.crunchybet.betapp.repository.NomineeRepository;
@@ -69,7 +70,7 @@ public class BetService {
         bet.setCategory(category);
         bet.setNominee(nominee);
         bet.setAmount(amount);
-        bet.setIsWinner(false);
+        bet.setStatus(BetStatus.PENDING);
         bet.setWinningAmount(0.0);
         bet.setPlacedAt(LocalDateTime.now());
         bet.setCreatedAt(LocalDateTime.now());

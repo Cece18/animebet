@@ -1,5 +1,6 @@
 package com.crunchybet.betapp.model;
 
+import com.crunchybet.betapp.model.enums.BetStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +20,8 @@ public class Bet {
 
     private Integer amount;
 
-    private Boolean isWinner;
+    @Enumerated(EnumType.STRING)
+    private BetStatus status = BetStatus.PENDING;
 
     private Double winningAmount;
 
@@ -51,14 +53,12 @@ public class Bet {
     public void setAmount(Integer amount) {
         this.amount = amount;
     }
-    public Boolean getIsWinner() {
-        return isWinner;
+    public BetStatus getStatus() {
+        return status;
     }
-    public void setIsWinner(Boolean isWinner) {
-        this.isWinner = isWinner;
-    }
-    public Double getWinningAmount() {
-        return winningAmount;
+
+    public void setStatus(BetStatus status) {
+        this.status = status;
     }
     public void setWinningAmount(Double winningAmount) {
         this.winningAmount = winningAmount;

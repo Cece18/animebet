@@ -6,6 +6,8 @@ public class NomineeDTO {
     private String imageUrl;
     private Double multiplier;
     private Integer totalBets;
+    private Long categoryId; // Add this field
+
 
     // Getters and Setters
     public Long getId() {
@@ -14,6 +16,14 @@ public class NomineeDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
     }
 
     public String getName() {
