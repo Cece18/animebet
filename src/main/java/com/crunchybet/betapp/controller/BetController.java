@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/bets")
+@RequestMapping("/api/bets")
 public class BetController {
     @Autowired
     private BetService betService;
@@ -25,29 +25,22 @@ public class BetController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/user-bets/{userId}")
-    public ResponseEntity<?> getUserBets(@PathVariable Long userId) {
-        try {
-            List<BetResponseDTO> userBets = betService.getUserBets(userId);
-
-            return ResponseEntity.ok(userBets); // directly return JSON list
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            response.put("success", false);
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
 
     //Place a bet
     @PostMapping("/place-bet")
     public ResponseEntity<?> placeBet(@RequestBody PlaceBetRequest request) {
         try {
-            // Get authentication and username
+            // Get authentication and
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
 
+            System.out.println("Username from token: " + username); // Debug line
+
+
             User user = userService.findByUsername(username);
+
+            System.out.println("User found: " + (user != null)); // Debug line
+
 
             if(user == null) {
                 return ResponseEntity.status(401).body("User not authenticated or not found");

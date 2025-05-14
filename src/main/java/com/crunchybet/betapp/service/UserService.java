@@ -43,8 +43,8 @@ public class UserService implements UserDetailsService {
         );
     }
 
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public User findByUsername(String email) {
+        return userRepository.findByEmail(email);
     }
 
     public User findByEmail(String email) {
@@ -84,6 +84,24 @@ public class UserService implements UserDetailsService {
         }
 
         return betRepository.findByUserOrderByPlacedAtDesc(user).stream()
+                .map(bet -> {
+                    BetResponseDTO dto = new BetResponseDTO();
+                    dto.setCategory(bet.getNominee().getCategory().getName());
+                    dto.setNominee(bet.getNominee().getName());
+                    dto.setAmount(bet.getAmount());
+                    dto.setPlacedAt(bet.getPlacedAt());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<BetResponseDTO> getBetsByCategory(String username, Long categoryId) {
+        User user = findByUsername(username);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        return betRepository.findByUserAndCategoryId(user, categoryId).stream()
                 .map(bet -> {
                     BetResponseDTO dto = new BetResponseDTO();
                     dto.setCategory(bet.getNominee().getCategory().getName());

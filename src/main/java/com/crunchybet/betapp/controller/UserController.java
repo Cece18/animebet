@@ -161,4 +161,22 @@ public class UserController {
         List<BetResponseDTO> history = userService.getBettingHistory(username);
         return ResponseEntity.ok(history);
     }
+
+    @GetMapping("/bets/category/{categoryId}")
+    public ResponseEntity<?> getUserBetsByCategory(@PathVariable Long categoryId) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            User user = userService.findByUsername(username);
+
+            if (user == null) {
+                return ResponseEntity.status(401).body("User not authenticated");
+            }
+
+            List<BetResponseDTO> bets = userService.getBetsByCategory(username, categoryId);
+            return ResponseEntity.ok(bets);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }
