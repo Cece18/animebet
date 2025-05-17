@@ -7,6 +7,7 @@ public class CategoryDTO {
     private String name;
     private String description;
     private List<NomineeDTO> nominees;
+    private Boolean isActive;
 
     // Getters and Setters
     public Long getId() {
@@ -23,6 +24,13 @@ public class CategoryDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+    public void setActive(Boolean active) {
+        isActive = active;
     }
 
     public String getDescription() {

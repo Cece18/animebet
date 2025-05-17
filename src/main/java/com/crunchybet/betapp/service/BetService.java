@@ -147,4 +147,13 @@ public class BetService {
                 .map(Bet::getId)
                 .orElse(null);
     }
+
+
+    public List<Bet> findBetsByCategory(Long categoryId) {
+        return betRepository.findByCategoryId(categoryId);
+    }
+
+    public Bet saveBet(Bet bet) {
+        return betRepository.save(bet);
+    }
 }

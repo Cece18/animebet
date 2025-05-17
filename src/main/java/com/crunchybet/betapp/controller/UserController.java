@@ -74,6 +74,7 @@ public class UserController {
             response.put("username", user.getUsername());
             response.put("email", user.getEmail());
             response.put("points", user.getPoints());
+            response.put("Role", user.getRole());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -133,10 +134,12 @@ public class UserController {
         String newEmail = payload.get("email");
         String newUsername = payload.get("username");
 
-        // Check if email already exists for another user
-        User userWithEmail = userService.findByEmail(newEmail);
-        if (userWithEmail != null && !userWithEmail.getUsername().equals(currentUsername)) {
-            return ResponseEntity.badRequest().body("Email already in use by another account");
+        // Only validate email if it's being changed
+        if (!newEmail.equals(existingUser.getEmail())) {
+            User userWithEmail = userService.findByEmail(newEmail);
+            if (userWithEmail != null && !userWithEmail.getId().equals(existingUser.getId())) {
+                return ResponseEntity.badRequest().body("Email already in use by another account");
+            }
         }
 
         // Update user details
@@ -178,5 +181,20 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/points")
+    public ResponseEntity<?> getUserPoints() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return ResponseEntity.status(401).body("User not authenticated");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("points", user.getPoints());
+        return ResponseEntity.ok(response);
     }
 }

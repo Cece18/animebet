@@ -1,5 +1,7 @@
 package com.crunchybet.betapp.dto;
 
+import jdk.jshell.Snippet;
+
 import java.util.List;
 
 public class CategoryOnlyDTO {
@@ -7,6 +9,7 @@ public class CategoryOnlyDTO {
     private Long id;
     private String name;
     private String description;
+    private Boolean isActive;
 
     // Getters and Setters
     public Long getId() {
@@ -31,6 +34,13 @@ public class CategoryOnlyDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+    public void setActive(Boolean active) {
+        isActive = active;
     }
 
 

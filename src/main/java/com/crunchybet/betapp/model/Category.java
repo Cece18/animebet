@@ -23,6 +23,9 @@ public class Category {
     private String name;
 
     private String description;
+    private Long winnerID;
+
+    private boolean isActive = true;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Nominee> nominees;
@@ -36,6 +39,8 @@ public class Category {
     public String getName() {
         return name;
     }
+
+
     public void setName(String name) {
         this.name = name;
     }
@@ -62,5 +67,18 @@ public class Category {
     public void setNominee(Nominee nominee) {
         this.nominees = List.of(nominee);
         nominee.setCategory(this);
+    }
+    public Long getWinnerID() {
+        return winnerID;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+    public boolean isActive() {
+        return isActive;
+    }
+    public void setWinnerID(Long winnerID) {
+        this.winnerID = winnerID;
     }
 }
