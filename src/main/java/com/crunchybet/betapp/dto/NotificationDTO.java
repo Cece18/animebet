@@ -52,6 +52,11 @@ public class NotificationDTO {
         this.actionUrl = actionUrl;
     }
 
+
+    // Add default constructor
+    public NotificationDTO() {
+    }
+
     // Factory method
     public static NotificationDTO fromNotification(Notifications notification) {
         NotificationDTO dto = new NotificationDTO();

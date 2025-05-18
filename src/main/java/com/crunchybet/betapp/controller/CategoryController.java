@@ -5,6 +5,8 @@ import com.crunchybet.betapp.dto.CategoryOnlyDTO;
 import com.crunchybet.betapp.dto.NomineeDTO;
 import com.crunchybet.betapp.repository.CategoryRepository;
 import com.crunchybet.betapp.service.CategoryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +23,9 @@ public class CategoryController {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(CategoryController.class);
+
 
 
     @GetMapping("/categories")
@@ -63,16 +68,22 @@ public class CategoryController {
     }
 
 
-    @PostMapping("/{categoryId}/set-winner")  // Change to PostMapping if you prefer POST
+    @PostMapping("/{categoryId}/set-winner")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> setCategoryWinner(@PathVariable Long categoryId, @RequestParam Long nomineeId) {
+    public ResponseEntity<?> setCategoryWinner(
+            @PathVariable("categoryId") Long categoryId,
+            @RequestParam("nomineeId") Long nomineeId) {
         try {
+            logger.info("Received request - categoryId: " + categoryId + ", nomineeId: " + nomineeId);
+            logger.info("Category ID type: " + categoryId.getClass().getName());
+            logger.info("Nominee ID type: " + nomineeId.getClass().getName());
             categoryService.setWinnerAndProcessBets(categoryId, nomineeId);
             return ResponseEntity.ok(Map.of(
                     "message", "Winner set successfully and bets processed",
                     "success", true
             ));
         } catch (Exception e) {
+            logger.error("Error processing request: " + e.getMessage()); // Add logging
             return ResponseEntity.badRequest().body(Map.of(
                     "error", e.getMessage(),
                     "success", false

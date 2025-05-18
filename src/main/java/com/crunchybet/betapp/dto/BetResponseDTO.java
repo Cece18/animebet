@@ -1,20 +1,19 @@
 package com.crunchybet.betapp.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.crunchybet.betapp.model.enums.BetStatus;
 
 import java.time.LocalDateTime;
 
-//@Data
-//@AllArgsConstructor
-//@NoArgsConstructor
+/**
+ * Data Transfer Object for Bet response.
+ */
 public class BetResponseDTO {
     private Long id;
     private String category;
     private String nominee;
     private Integer amount;
     private LocalDateTime placedAt;
+    private BetStatus status = BetStatus.PENDING;
 
 
     public BetResponseDTO() {}
@@ -28,6 +27,9 @@ public class BetResponseDTO {
 
     public Long getId() {
         return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getCategory() {
@@ -50,6 +52,13 @@ public class BetResponseDTO {
         return amount;
     }
 
+    public void setStatus(BetStatus status) {
+        this.status = status;
+    }
+    public BetStatus getStatus() {
+        return status;
+    }
+
     public void setAmount(Integer amount) {
         this.amount = amount;
     }
@@ -61,4 +70,6 @@ public class BetResponseDTO {
     public void setPlacedAt(LocalDateTime placedAt) {
         this.placedAt = placedAt;
     }
+
+
 }

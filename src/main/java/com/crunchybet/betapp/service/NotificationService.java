@@ -49,10 +49,6 @@ public class NotificationService {
         return notificationRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
-    public List<Notifications> getUnreadNotifications(User user) {
-        return notificationRepository.findByUserAndReadFalseOrderByCreatedAtDesc(user);
-    }
-
     public int countUnreadNotifications(User user) {
         return notificationRepository.countByUserAndReadFalse(user);
     }

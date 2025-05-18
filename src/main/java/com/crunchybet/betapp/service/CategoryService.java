@@ -1,5 +1,6 @@
 package com.crunchybet.betapp.service;
 
+import com.crunchybet.betapp.controller.WebSocketNotificationController;
 import com.crunchybet.betapp.dto.CategoryDTO;
 import com.crunchybet.betapp.dto.CategoryOnlyDTO;
 import com.crunchybet.betapp.dto.NomineeDTO;
@@ -28,6 +29,9 @@ public class CategoryService {
 
     @Autowired
     private BetService betService;
+
+    @Autowired
+    private WebSocketNotificationController webSocketController;
 
 
     //just get categories no nominees
@@ -125,13 +129,16 @@ public class CategoryService {
 
                 //Create Notification
                 notificationService.createBetResultNotification(user, category, true, winnings);
+                webSocketController.sendPointsUpdate(
+                        user.getUsername(),
+                        user.getPoints(),
+                        "Won bet: +" + (int)winnings + " points"
+                );
 
             } else {
                 // Losing bet
                 bet.setStatus(BetStatus.LOSER);
                 bet.setWinningAmount(0.0);
-
-
                 notificationService.createBetResultNotification(bet.getUser(), category, false, 0);
 
             }

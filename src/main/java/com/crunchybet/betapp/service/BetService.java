@@ -1,5 +1,6 @@
 package com.crunchybet.betapp.service;
 
+import com.crunchybet.betapp.controller.WebSocketNotificationController;
 import com.crunchybet.betapp.dto.BetResponseDTO;
 import com.crunchybet.betapp.model.Bet;
 import com.crunchybet.betapp.model.Category;
@@ -10,6 +11,7 @@ import com.crunchybet.betapp.repository.BetRepository;
 import com.crunchybet.betapp.repository.CategoryRepository;
 import com.crunchybet.betapp.repository.NomineeRepository;
 import com.crunchybet.betapp.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,25 +31,11 @@ public class BetService {
     @Autowired
     private UserRepository userRepository;
 
-    //Method to get bets of a user
-    public List<BetResponseDTO> getUserBets(Long userId) {
-        List<Bet> bets = betRepository.findByUserId(userId);
+    @Autowired
+    private WebSocketNotificationController webSocketController;
 
-        return bets.stream()
-                .map(bet -> {
-                    BetResponseDTO dto = new BetResponseDTO(
-                            bet.getId(),
-                            bet.getCategory().getName(),
-                            bet.getNominee().getName(),
-                            bet.getAmount()
-                    );
-                    dto.setPlacedAt(bet.getPlacedAt());
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
-
-    public void placeBet(Long categoryId, Long nomineeId, Long userId, Integer amount) {
+    @Transactional
+    public Bet placeBet(Long categoryId, Long nomineeId, Long userId, Integer amount) {
         // Check if category and nominee exist
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -65,6 +53,12 @@ public class BetService {
         user.setPoints(user.getPoints() - amount);
         userRepository.save(user);
 
+        webSocketController.sendPointsUpdate(
+                user.getUsername(),
+                user.getPoints(),
+                "Bet placed: -" + amount + " points"
+        );
+
         // Create new bet with all required fields
         Bet bet = new Bet();
         bet.setCategory(category);
@@ -77,6 +71,8 @@ public class BetService {
         bet.setUser(user);
 
         betRepository.save(bet);
+
+        return bet;
     }
 
     public void updateBet(Long betId, Long nomineeId, Long userId, Integer newAmount) {
@@ -117,6 +113,11 @@ public class BetService {
     public void deleteBet(Long betId) {
         Bet bet = betRepository.findById(betId)
                 .orElseThrow(() -> new RuntimeException("Bet not found"));
+
+        // Verify the category is not closed
+        if (!bet.getCategory().isActive()) {
+            throw new RuntimeException("Cannot delete bet, category is closed");
+        }
 
         // Refund the user's points
         User user = bet.getUser();

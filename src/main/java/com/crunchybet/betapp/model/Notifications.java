@@ -35,6 +35,7 @@ public class Notifications {
     @Column
     private String actionUrl;
 
+
     public Notifications(User user, String message, String actionUrl, boolean read, LocalDateTime createdAt) {
         this.user = user;
         this.message = message;

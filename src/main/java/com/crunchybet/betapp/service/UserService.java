@@ -39,7 +39,7 @@ public class UserService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("USER"))
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))  // Add ROLE_ prefix
         );
     }
 
@@ -90,10 +90,12 @@ public class UserService implements UserDetailsService {
         return betRepository.findByUserOrderByPlacedAtDesc(user).stream()
                 .map(bet -> {
                     BetResponseDTO dto = new BetResponseDTO();
+                    dto.setId(bet.getId());
                     dto.setCategory(bet.getNominee().getCategory().getName());
                     dto.setNominee(bet.getNominee().getName());
                     dto.setAmount(bet.getAmount());
                     dto.setPlacedAt(bet.getPlacedAt());
+                    dto.setStatus(bet.getStatus());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -117,7 +119,4 @@ public class UserService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    public User save(User user) {
-        return userRepository.save(user);
-    }
 }
