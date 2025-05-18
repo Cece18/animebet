@@ -30,7 +30,7 @@ public class NotificationService {
                 String.format("Congratulations! You won %.2f points in the %s category!", amount, category.getName()) :
                 String.format("Better luck next time! You lost your bet in the %s category.", category.getName());
 
-        String actionUrl = "/categories/" + category.getId();
+        String actionUrl = "/categories/" + category.getName();
 
         Notifications notification = new Notifications(user, message,actionUrl, false, LocalDateTime.now());
 

@@ -49,9 +49,17 @@ public class BetService {
         if (user.getPoints() < amount) {
             throw new RuntimeException("Insufficient balance");
         }
+
+        // Check if the category is active
+        if (!category.isActive()) {
+            throw new RuntimeException("Category is closed for betting");
+        }
+
         // Deduct the amount from user's points
         user.setPoints(user.getPoints() - amount);
         userRepository.save(user);
+
+
 
         webSocketController.sendPointsUpdate(
                 user.getUsername(),
@@ -89,6 +97,11 @@ public class BetService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if the category is active
+        if (!existingBet.getCategory().isActive()) {
+            throw new RuntimeException("Category is closed for betting");
+        }
 
         // Calculate points difference
         int pointsDifference = newAmount - existingBet.getAmount();
