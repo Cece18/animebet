@@ -100,7 +100,7 @@ public class BetService {
 
         // Check if the category is active
         if (!existingBet.getCategory().isActive()) {
-            throw new RuntimeException("Category is closed for betting");
+            throw new RuntimeException("Cannot update Bet, Category is closed for betting");
         }
 
         // Calculate points difference

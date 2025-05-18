@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/categories/*/set-winner").hasRole("ADMIN")
                         .requestMatchers("/api/users/signup", "/api/users/auth/login", "/ws/**", "/topic/**", "/app/**").permitAll()
+                        .requestMatchers("/api/users/points-stream").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->

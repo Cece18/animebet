@@ -5,6 +5,7 @@ import com.crunchybet.betapp.dto.UserDTO;
 import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.repository.UserRepository;
 import com.crunchybet.betapp.service.JwtService;
+import com.crunchybet.betapp.service.SseService;
 import com.crunchybet.betapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -196,5 +198,16 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         response.put("points", user.getPoints());
         return ResponseEntity.ok(response);
+    }
+
+    // Add this to your existing UserController.java
+    @Autowired
+    private SseService sseService;
+
+    @GetMapping("/points-stream")
+    public SseEmitter streamPoints() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        return sseService.createEmitter(username);
     }
 }

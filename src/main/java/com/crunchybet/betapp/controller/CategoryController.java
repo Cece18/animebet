@@ -67,6 +67,23 @@ public class CategoryController {
         }
     }
 
+    @GetMapping("/openAll")
+    @PreAuthorize("hasRole('ADMIN')")  // Ensure only admin can access
+    public ResponseEntity<?> openAllCategories() {
+        try {
+            categoryService.openAllCategories();
+            return ResponseEntity.ok(Map.of(
+                    "message", "All categories opened successfully",
+                    "success", true
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", e.getMessage(),
+                    "success", false
+            ));
+        }
+    }
+
 
     @PostMapping("/{categoryId}/set-winner")
     @PreAuthorize("hasRole('ADMIN')")

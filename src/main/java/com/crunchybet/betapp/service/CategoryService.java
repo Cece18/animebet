@@ -11,9 +11,12 @@ import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.model.enums.BetStatus;
 import com.crunchybet.betapp.repository.CategoryRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +34,10 @@ public class CategoryService {
     private BetService betService;
 
     @Autowired
-    private WebSocketNotificationController webSocketController;
+    private SseService sseService;
+
+    private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
+
 
 
     //just get categories no nominees
@@ -105,6 +111,12 @@ public class CategoryService {
         if (category.isActive()) {
             category.setActive(false);
         }
+
+        // Check if category already has a winner
+        if (category.getWinnerID() != null) {
+            throw new RuntimeException("Category already has a winner");
+        }
+
         // 2. Set winner ID
         category.setWinnerID(nomineeId);
         categoryRepository.save(category);
@@ -129,11 +141,11 @@ public class CategoryService {
 
                 //Create Notification
                 notificationService.createBetResultNotification(user, category, true, winnings);
-                webSocketController.sendPointsUpdate(
-                        user.getUsername(),
-                        user.getPoints(),
-                        "Won bet: +" + (int)winnings + " points"
-                );
+                sseService.sendPointsUpdate(user.getUsername(), user.getPoints(),
+                        "Won bet: +" + (int)winnings + " points");
+
+
+
 
             } else {
                 // Losing bet
@@ -148,9 +160,22 @@ public class CategoryService {
 
     public void closeAllCategories() {
         List<Category> categories = categoryRepository.findAll();
-        for (Category category : categories) {
-            category.setActive(false);
-            categoryRepository.save(category);
-        }
+
+        categories.forEach(c -> c.setActive(false));
+        categoryRepository.saveAll(categories);
     }
+
+    public void openAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+
+        // Only activate categories that don't have a winner
+        List<Category> toActivate = categories.stream()
+                .filter(c -> c.getWinnerID() == null)
+                .peek(c -> c.setActive(true))
+                .toList();
+
+        categoryRepository.saveAll(toActivate);
+    }
+
+
 }
