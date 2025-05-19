@@ -5,6 +5,7 @@ import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.repository.BetRepository;
 import com.crunchybet.betapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -45,10 +46,12 @@ public class UserService implements UserDetailsService {
         );
     }
 
+    @Cacheable(value = "usersByUsername", key = "#p0")
     public User findByUsername(String email) {
         return userRepository.findByEmail(email);
     }
 
+    @Cacheable(value = "usersByEmail", key = "#email")
     public User findByEmail(String email) {
         return userRepository.findByEmail(email);
     }

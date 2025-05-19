@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
+
 
 
 import java.util.List;
@@ -51,6 +53,8 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+
+    @Cacheable(value = "nomineesByCategory", key = "#categoryName")
     public List<NomineeDTO> getNomineesByCategoryName(String categoryName) {
         Category category = categoryRepository.findByNameOrderByNameAsc(categoryName).stream()
                 .findFirst()
@@ -69,6 +73,7 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "topCategoriesWithNominees", key = "#limit")
     public List<CategoryDTO> findTopNWithNominees(int limit) {
         List<Category> categories = categoryRepository.findTopNOrderByIdAsc(PageRequest.of(0, limit));
         return categories.stream()

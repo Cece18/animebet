@@ -4,7 +4,6 @@ import com.crunchybet.betapp.dto.BetResponseDTO;
 import com.crunchybet.betapp.dto.UserDTO;
 import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.repository.UserRepository;
-import com.crunchybet.betapp.service.CategoryService;
 import com.crunchybet.betapp.service.JwtService;
 import com.crunchybet.betapp.service.SseService;
 import com.crunchybet.betapp.service.UserService;
@@ -233,8 +232,9 @@ public class UserController {
     public SseEmitter streamPoints() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        logger.info("👂 SSE connection established for user: {}", username);
-        return sseService.createEmitter(username);
+        String email = userService.findByUsername(username).getEmail();
+        logger.info("👂 SSE connection established for user: {}", email);
+        return sseService.createEmitter(email);
     }
 
     // In UserController.java
