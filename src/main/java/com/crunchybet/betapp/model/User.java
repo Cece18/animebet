@@ -4,6 +4,8 @@ package com.crunchybet.betapp.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -27,6 +29,11 @@ public class User {
     @Column(nullable = false)
     private String role = "USER"; // default at Java level
 
+    @Column
+    private String resetCode;
+
+    @Column
+    private LocalDateTime resetCodeExpiry;
 
 
     public Long getId() {
@@ -67,6 +74,23 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    // Add getters and setters
+    public String getResetCode() {
+        return resetCode;
+    }
+
+    public void setResetCode(String resetCode) {
+        this.resetCode = resetCode;
+    }
+
+    public LocalDateTime getResetCodeExpiry() {
+        return resetCodeExpiry;
+    }
+
+    public void setResetCodeExpiry(LocalDateTime resetCodeExpiry) {
+        this.resetCodeExpiry = resetCodeExpiry;
     }
 }
 

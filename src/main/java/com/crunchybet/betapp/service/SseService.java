@@ -32,21 +32,24 @@ public class SseService {
         return emitter;
     }
 
-    public void sendPointsUpdate(String username, int points, String reason) {
-        SseEmitter emitter = emitters.get(username);
+    public void sendPointsUpdate(String email, int points, String reason) {
+        SseEmitter emitter = emitters.get(email);
         if (emitter != null) {
             try {
+                logger.info("Found emitter for user {}, attempting to send update", email);
                 emitter.send(SseEmitter.event()
                         .name("points-update")
                         .data(Map.of(
                                 "points", points,
                                 "reason", reason
                         )));
-                logger.info("Points update sent to user {}: {} ({})", username, points, reason);
+                logger.info("Points update sent to user {}: {} ({})", email, points, reason);
             } catch (IOException e) {
-                emitters.remove(username);
-                logger.error("Error sending points update to user {}: {}", username, e.getMessage());
+                emitters.remove(email);
+                logger.error("Error sending points update to user {}: {}", email, e.getMessage());
             }
+        }else {
+            logger.warn("No SSE emitter found for user {}", email);
         }
     }
 }

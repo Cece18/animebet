@@ -4,16 +4,21 @@ import com.crunchybet.betapp.dto.BetResponseDTO;
 import com.crunchybet.betapp.dto.UserDTO;
 import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.repository.UserRepository;
+import com.crunchybet.betapp.service.CategoryService;
 import com.crunchybet.betapp.service.JwtService;
 import com.crunchybet.betapp.service.SseService;
 import com.crunchybet.betapp.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -33,14 +38,20 @@ public class UserController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private SseService sseService;
+
+    private static final Logger logger = LoggerFactory.getLogger(CategoryController.class);
+
+
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody UserDTO userDTO) {
-        User existingUser = userService.findByUsername(userDTO.getUsername());
+        User existingUser = userService.findByUsername(userDTO.getUsername().toLowerCase());
         if (existingUser != null) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
 
-        User userWithEmail = userService.findByEmail(userDTO.getEmail());
+        User userWithEmail = userService.findByEmail(userDTO.getEmail().toLowerCase());
         if (userWithEmail != null) {
             return ResponseEntity.badRequest().body("Email already in use");
         }
@@ -86,6 +97,23 @@ public class UserController {
 
     @PostMapping("/update-password")
     public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> payload) {
+        // Get current user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+
+        String oldPassword = payload.get("oldPassword");
+        String newPassword = payload.get("newPassword");
+
+        try {
+            userService.updatePassword(currentUsername, oldPassword, newPassword);
+            return ResponseEntity.ok("Password updated successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> Password(@RequestBody Map<String, String> payload) {
         // Get current user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
@@ -200,14 +228,54 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    // Add this to your existing UserController.java
-    @Autowired
-    private SseService sseService;
 
-    @GetMapping("/points-stream")
+    @GetMapping(value = "/points-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamPoints() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
+        logger.info("👂 SSE connection established for user: {}", username);
         return sseService.createEmitter(username);
+    }
+
+    // In UserController.java
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        try {
+            userService.initiatePasswordReset(email);
+            return ResponseEntity.ok(Map.of("message", "Reset code sent to email"));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found"));
+        }
+    }
+
+    @PostMapping("/verify-reset-code")
+    public ResponseEntity<?> verifyResetCode(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+
+        boolean isValid = userService.verifyResetCode(email, code);
+        if (isValid) {
+            return ResponseEntity.ok(Map.of("message", "Code verified successfully"));
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid or expired code"));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+        String newPassword = request.get("newPassword");
+
+        try {
+            userService.resetPassword(email, code, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }

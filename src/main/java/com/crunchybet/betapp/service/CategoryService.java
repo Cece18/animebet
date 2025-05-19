@@ -1,6 +1,5 @@
 package com.crunchybet.betapp.service;
 
-import com.crunchybet.betapp.controller.WebSocketNotificationController;
 import com.crunchybet.betapp.dto.CategoryDTO;
 import com.crunchybet.betapp.dto.CategoryOnlyDTO;
 import com.crunchybet.betapp.dto.NomineeDTO;
@@ -39,8 +38,6 @@ public class CategoryService {
     private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
 
 
-
-    //just get categories no nominees
     public List<CategoryOnlyDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
@@ -127,6 +124,8 @@ public class CategoryService {
 
     private void processBetsForCategory(Category category, Nominee winner) {
         List<Bet> categoryBets = betService.findBetsByCategory(category.getId());
+        logger.info("Processing {} bets for category {}", categoryBets.size(), category.getName());
+
 
         for (Bet bet : categoryBets) {
             if (bet.getNominee().getId().equals(winner.getId())) {
@@ -137,14 +136,19 @@ public class CategoryService {
 
                 // Update user points
                 User user = bet.getUser();
+
+                logger.info("Processing winning bet for user {}: amount={}, multiplier={}, winnings={}",
+                        user.getUsername(), bet.getAmount(), bet.getNominee().getMultiplier(), winnings);
+
                 user.setPoints(user.getPoints() + (int) winnings);
 
                 //Create Notification
                 notificationService.createBetResultNotification(user, category, true, winnings);
-                sseService.sendPointsUpdate(user.getUsername(), user.getPoints(),
+
+                logger.info("Attempting to send SSE update to {}", user.getUsername());
+
+                sseService.sendPointsUpdate(user.getEmail(), user.getPoints(),
                         "Won bet: +" + (int)winnings + " points");
-
-
 
 
             } else {

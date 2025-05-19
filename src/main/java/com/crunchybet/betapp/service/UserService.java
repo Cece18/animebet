@@ -12,8 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,6 +112,7 @@ public class UserService implements UserDetailsService {
         return betRepository.findByUserAndCategoryId(user, categoryId).stream()
                 .map(bet -> {
                     BetResponseDTO dto = new BetResponseDTO();
+                    dto.setId(bet.getId());
                     dto.setCategory(bet.getNominee().getCategory().getName());
                     dto.setNominee(bet.getNominee().getName());
                     dto.setAmount(bet.getAmount());
@@ -117,6 +120,55 @@ public class UserService implements UserDetailsService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // In UserService.java
+    @Autowired
+    private EmailService emailService;
+
+    public void initiatePasswordReset(String email) {
+        User user = findByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        // Generate 6-digit code
+        String resetCode = String.format("%06d", new Random().nextInt(999999));
+        user.setResetCode(resetCode);
+        user.setResetCodeExpiry(LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+
+        // Send email with code
+        emailService.sendResetCode(email, resetCode);
+    }
+
+    public boolean verifyResetCode(String email, String code) {
+        User user = findByEmail(email);
+        if (user == null || user.getResetCode() == null) {
+            return false;
+        }
+
+        if (LocalDateTime.now().isAfter(user.getResetCodeExpiry())) {
+            // Code has expired
+            user.setResetCode(null);
+            user.setResetCodeExpiry(null);
+            userRepository.save(user);
+            return false;
+        }
+
+        return user.getResetCode().equals(code);
+    }
+
+    public void resetPassword(String email, String code, String newPassword) {
+        if (!verifyResetCode(email, code)) {
+            throw new IllegalArgumentException("Invalid or expired reset code");
+        }
+
+        User user = findByEmail(email);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetCode(null);
+        user.setResetCodeExpiry(null);
+        userRepository.save(user);
     }
 
 }
