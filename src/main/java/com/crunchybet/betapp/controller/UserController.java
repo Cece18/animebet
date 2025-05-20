@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -45,25 +46,14 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody UserDTO userDTO) {
-        User existingUser = userService.findByUsername(userDTO.getUsername().toLowerCase());
-        if (existingUser != null) {
-            return ResponseEntity.badRequest().body("Username already exists");
+        try {
+            userService.createUser(userDTO);
+            return ResponseEntity.ok("User registered successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Something went wrong");
         }
-
-        User userWithEmail = userService.findByEmail(userDTO.getEmail().toLowerCase());
-        if (userWithEmail != null) {
-            return ResponseEntity.badRequest().body("Email already in use");
-        }
-
-        User user = new User();
-        user.setUsername(userDTO.getUsername());
-        user.setPassword(userDTO.getPassword());
-
-        user.setEmail(userDTO.getEmail());
-
-        userService.registerUser(user);
-
-        return ResponseEntity.ok("User registered successfully");
     }
 
 
@@ -73,13 +63,29 @@ public class UserController {
         String password = credentials.get("password");
 
         try {
+            System.out.println("Attempting login for: " + email);
+
             User user = userService.findByEmail(email);
-            if (user == null || !userService.verifyPassword(password, user.getPassword())) {
-                return ResponseEntity.status(401).body("Invalid credentials");
+            System.out.println("User found: " + (user != null));
+
+            if (user == null) {
+                return ResponseEntity.status(401).body("Invalid credentials - user not found");
             }
 
+            boolean match = userService.verifyPassword(password, user.getPassword());
+            System.out.println("Password match? " + match);
+
+            if (!match) {
+                return ResponseEntity.status(401).body("Invalid credentials - password mismatch");
+            }
+
+            System.out.println("Loading user details...");
             UserDetails userDetails = userService.loadUserByUsername(email);
+            System.out.println("UserDetails loaded: " + userDetails.getUsername());
+
+            System.out.println("Generating token...");
             String token = jwtService.generateToken(userDetails);
+            System.out.println("Token generated: " + token);
 
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
@@ -128,6 +134,8 @@ public class UserController {
         }
     }
 
+
+    @Transactional(readOnly = true)
     @GetMapping("/current")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
@@ -144,10 +152,12 @@ public class UserController {
         response.put("points", user.getPoints());
         response.put("initials", user.getUsername().substring(0, Math.min(2, user.getUsername().length())).toUpperCase());
         response.put("email", user.getEmail());
+        response.put("role", user.getRole());
 
         return ResponseEntity.ok(response);
     }
 
+    @Transactional(readOnly = true)
     @PostMapping("/update-profile")
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> payload) {
         // Get the authenticated username from Spring Security
@@ -212,20 +222,20 @@ public class UserController {
         }
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/points")
     public ResponseEntity<?> getUserPoints() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        User user = userService.findByUsername(username);
-        if (user == null) {
+        Integer points = userRepository.findPointsByUsername(username);
+        if (points == null) {
             return ResponseEntity.status(401).body("User not authenticated");
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("points", user.getPoints());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("points", points));
     }
+
 
 
     @GetMapping(value = "/points-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

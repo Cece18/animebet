@@ -4,6 +4,7 @@ import com.crunchybet.betapp.service.JwtService;
 import com.crunchybet.betapp.service.UserService;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -23,12 +24,16 @@ import java.util.List;
 
 @Configuration
 @EnableWebSocketMessageBroker
-@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtService jwtService;
     private final UserService userService; // Add UserService
 
+    @Autowired
+    public WebSocketConfig(JwtService jwtService, UserService userService) {
+        this.jwtService = jwtService;
+        this.userService = userService;
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {

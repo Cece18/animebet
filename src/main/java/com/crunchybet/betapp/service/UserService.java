@@ -1,6 +1,7 @@
 package com.crunchybet.betapp.service;
 
 import com.crunchybet.betapp.dto.BetResponseDTO;
+import com.crunchybet.betapp.dto.UserDTO;
 import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.repository.BetRepository;
 import com.crunchybet.betapp.repository.UserRepository;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -22,7 +24,12 @@ import java.util.stream.Collectors;
 @Service
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
+
 
     @Autowired
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -56,8 +63,26 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email);
     }
 
-    public void registerUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+    @Transactional
+    public void createUser(UserDTO userDTO) {
+        String email = userDTO.getEmail().toLowerCase();
+        String username = userDTO.getUsername().toLowerCase();
+
+        if (userRepository.findByEmail(email) != null) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        if (userRepository.findByUsername(username) != null) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        user.setPoints(1000); // or whatever your default is
+
         userRepository.save(user);
     }
 
@@ -67,6 +92,7 @@ public class UserService implements UserDetailsService {
 
 
 
+    @Transactional
     public void updatePassword(String username, String oldPassword, String newPassword) {
         User user = findByUsername(username);
         if (user == null) {
@@ -125,10 +151,8 @@ public class UserService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    // In UserService.java
-    @Autowired
-    private EmailService emailService;
 
+    @Transactional
     public void initiatePasswordReset(String email) {
         User user = findByEmail(email);
         if (user == null) {
@@ -145,6 +169,7 @@ public class UserService implements UserDetailsService {
         emailService.sendResetCode(email, resetCode);
     }
 
+    @Transactional
     public boolean verifyResetCode(String email, String code) {
         User user = findByEmail(email);
         if (user == null || user.getResetCode() == null) {
@@ -162,6 +187,7 @@ public class UserService implements UserDetailsService {
         return user.getResetCode().equals(code);
     }
 
+    @Transactional
     public void resetPassword(String email, String code, String newPassword) {
         if (!verifyResetCode(email, code)) {
             throw new IllegalArgumentException("Invalid or expired reset code");

@@ -13,8 +13,12 @@ import java.io.UnsupportedEncodingException;
 @Service
 public class EmailService {
 
+    private final JavaMailSender mailSender;
+
     @Autowired
-    private JavaMailSender mailSender;
+    public EmailService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
 public void sendResetCode(String to, String code) {
     try {

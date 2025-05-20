@@ -34,12 +34,8 @@ public class BetController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
 
-            System.out.println("Username from token: " + username); // Debug line
-
 
             User user = userService.findByUsername(username);
-
-            System.out.println("User found: " + (user != null)); // Debug line
 
 
             if(user == null) {

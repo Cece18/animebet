@@ -83,6 +83,7 @@ public class BetService {
         return bet;
     }
 
+    @Transactional
     public void updateBet(Long betId, Long nomineeId, Long userId, Integer newAmount) {
         Bet existingBet = betRepository.findById(betId)
                 .orElseThrow(() -> new RuntimeException("Bet not found"));
@@ -123,6 +124,7 @@ public class BetService {
         betRepository.save(existingBet);
     }
 
+    @Transactional
     public void deleteBet(Long betId) {
         Bet bet = betRepository.findById(betId)
                 .orElseThrow(() -> new RuntimeException("Bet not found"));
@@ -167,7 +169,4 @@ public class BetService {
         return betRepository.findByCategoryId(categoryId);
     }
 
-    public Bet saveBet(Bet bet) {
-        return betRepository.save(bet);
-    }
 }

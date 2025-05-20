@@ -7,7 +7,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,19 +17,19 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
+    private final UserRepository userRepository;
+    private final String secretKey = "5D68E79BCED4A2442A72DD7F6A4A75D68E79BCED4A2442A72DD7F6A4A7";
+    private final long expirationTime = 86400000; // 24 hours in milliseconds
+
     @Autowired
-    private UserRepository userRepository;
-
-    @Value("${jwt.secret}")
-    private String secretKey;
-
-    @Value("${jwt.expiration}")
-    private long expirationTime; // 24 hours
+    public JwtService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public String generateToken(UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername());
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", "ROLE_" + user.getRole());  // Add ROLE_ prefix
+        claims.put("roles", "ROLE_" + user.getRole());
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -76,7 +75,6 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // In JwtService.java
     public List<String> extractRoles(String token) {
         final Claims claims = extractAllClaims(token);
         String rolesStr = claims.get("roles", String.class);

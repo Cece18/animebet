@@ -8,8 +8,9 @@ import com.crunchybet.betapp.model.Category;
 import com.crunchybet.betapp.model.Nominee;
 import com.crunchybet.betapp.model.User;
 import com.crunchybet.betapp.model.enums.BetStatus;
+import com.crunchybet.betapp.repository.BetRepository;
 import com.crunchybet.betapp.repository.CategoryRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 
 
-
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,8 @@ public class CategoryService {
     private SseService sseService;
 
     private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
+    @Autowired
+    private BetRepository betRepository;
 
 
     public List<CategoryOnlyDTO> getAllCategories() {
@@ -55,12 +58,14 @@ public class CategoryService {
 
 
     @Cacheable(value = "nomineesByCategory", key = "#categoryName")
+    @Transactional(readOnly = true)
     public List<NomineeDTO> getNomineesByCategoryName(String categoryName) {
-        Category category = categoryRepository.findByNameOrderByNameAsc(categoryName).stream()
+        Category category = categoryRepository.findByNameWithNominees(categoryName).stream()
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Category not found: " + categoryName));
 
         return category.getNominees().stream()
+                .sorted(Comparator.comparing(Nominee::getId))
                 .map(nominee -> {
                     NomineeDTO nomineeDTO = new NomineeDTO();
                     nomineeDTO.setId(nominee.getId());
@@ -74,16 +79,17 @@ public class CategoryService {
     }
 
     @Cacheable(value = "topCategoriesWithNominees", key = "#limit")
+    @Transactional(readOnly = true)
     public List<CategoryDTO> findTopNWithNominees(int limit) {
         List<Category> categories = categoryRepository.findTopNOrderByIdAsc(PageRequest.of(0, limit));
         return categories.stream()
                 .map(category -> {
-                    CategoryDTO categoryDTO = new CategoryDTO();
-                    categoryDTO.setId(category.getId());
-                    categoryDTO.setName(category.getName());
-                    categoryDTO.setActive(category.isActive());
-                    categoryDTO.setDescription(category.getDescription());
-                    categoryDTO.setNominees(category.getNominees().stream()
+                    CategoryDTO dto = new CategoryDTO();
+                    dto.setId(category.getId());
+                    dto.setName(category.getName());
+                    dto.setDescription(category.getDescription());
+                    dto.setActive(category.isActive());
+                    dto.setNominees(category.getNominees().stream()
                             .map(nominee -> {
                                 NomineeDTO nomineeDTO = new NomineeDTO();
                                 nomineeDTO.setId(nominee.getId());
@@ -93,10 +99,11 @@ public class CategoryService {
                                 return nomineeDTO;
                             })
                             .collect(Collectors.toList()));
-                    return categoryDTO;
+                    return dto;
                 })
                 .collect(Collectors.toList());
     }
+
 
     @Transactional
     public void setWinnerAndProcessBets(Long categoryId, Long nomineeId) {
@@ -127,7 +134,8 @@ public class CategoryService {
         processBetsForCategory(category, winner);
     }
 
-    private void processBetsForCategory(Category category, Nominee winner) {
+
+    public void processBetsForCategory(Category category, Nominee winner) {
         List<Bet> categoryBets = betService.findBetsByCategory(category.getId());
         logger.info("Processing {} bets for category {}", categoryBets.size(), category.getName());
 
@@ -163,10 +171,11 @@ public class CategoryService {
                 notificationService.createBetResultNotification(bet.getUser(), category, false, 0);
 
             }
-            betService.saveBet(bet);
+            betRepository.save(bet);
         }
     }
 
+    @Transactional
     public void closeAllCategories() {
         List<Category> categories = categoryRepository.findAll();
 
@@ -174,6 +183,7 @@ public class CategoryService {
         categoryRepository.saveAll(categories);
     }
 
+    @Transactional
     public void openAllCategories() {
         List<Category> categories = categoryRepository.findAll();
 

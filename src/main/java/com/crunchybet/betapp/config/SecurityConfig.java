@@ -37,7 +37,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/categories/*/set-winner").hasRole("ADMIN")
-                        .requestMatchers("/api/users/signup", "/api/users/auth/login", "/ws/**", "/topic/**", "/app/**", "api/users/forgot-password", "api/users/verify-reset-code","api/users/reset-password").permitAll()
+                        .requestMatchers("/api/users/signup",
+                                "/api/users/auth/login",
+                                "/ws/**",
+                                "/topic/**",
+                                "/app/**",
+                                "/api/users/forgot-password",
+                                "/api/users/verify-reset-code",
+                                "/api/users/reset-password").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
